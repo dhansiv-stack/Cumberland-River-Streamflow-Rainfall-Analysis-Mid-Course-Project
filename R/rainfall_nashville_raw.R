@@ -13,3 +13,4 @@ rain_hourly <- riem_measures(
 rain_hourly
 
 write_csv(rain_hourly, "data_raw/rainfall_nashville_raw.csv")
+

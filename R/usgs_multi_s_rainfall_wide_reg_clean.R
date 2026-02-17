@@ -57,7 +57,7 @@ summary(model2)
 # Add multiple stations rainfall variables in the model
 
 model_multi <- lm(
-  flow_cfs ~ rainfall_BNA + rainfall_ASH + rainfall_SCX + rainfall_CKV,
+  flow_cfs ~ rainfall_BNA + rainfall_ASH + rainfall_CKV,
   data = reg_df
 )
 
@@ -74,8 +74,6 @@ reg_multi_lag <- reg_df |>
     rainfall_MRB_lag2 = lag(rainfall_MRB, 2),
     rainfall_ASH_lag1 = lag(rainfall_ASH, 1),
     rainfall_ASH_lag2 = lag(rainfall_ASH, 2),
-    rainfall_SCX_lag1 = lag(rainfall_SCX, 1),
-    rainfall_SCX_lag2 = lag(rainfall_SCX, 2),
     rainfall_CKV_lag1 = lag(rainfall_CKV, 1),
     rainfall_CKV_lag2 = lag(rainfall_CKV, 2)
     
@@ -86,7 +84,6 @@ model_multi_lag <- lm(
     rainfall_BNA_lag1 + rainfall_BNA_lag2+
     rainfall_MRB_lag1 + rainfall_MRB_lag2+
     rainfall_ASH_lag1 + rainfall_ASH_lag2 +
-    rainfall_SCX_lag1 + rainfall_SCX_lag2 +
     rainfall_CKV_lag1 + rainfall_CKV_lag2,
   data = reg_multi_lag
 )
@@ -111,7 +108,6 @@ reg_rain_flow_lag <- reg_multi_lag |>
     rainfall_BNA_lag1, rainfall_BNA_lag2,
     rainfall_MRB_lag1, rainfall_MRB_lag2,
     rainfall_ASH_lag1, rainfall_ASH_lag2,
-    rainfall_SCX_lag1, rainfall_SCX_lag2,
     rainfall_CKV_lag1, rainfall_CKV_lag2
   )
 
@@ -122,7 +118,6 @@ model_rain_flow_cfs_lag <- lm(
     rainfall_BNA_lag1 + rainfall_BNA_lag2+
     rainfall_MRB_lag1 + rainfall_MRB_lag2+
     rainfall_ASH_lag1 + rainfall_ASH_lag2 +
-    rainfall_SCX_lag1 + rainfall_SCX_lag2 +
     rainfall_CKV_lag1 + rainfall_CKV_lag2,
   data = reg_rain_flow_lag
 )
@@ -142,7 +137,6 @@ summary(model_flow_cfs_lag)
 # Define place names
 
 station_names <- c(
-  "SCX" = "Springfield",
   "BNA" = "Nashville Airport",
   "MRB" = "Murpreesboro",
   "CKV" = "Clarksville",
@@ -169,7 +163,6 @@ coef_both <- bind_rows(
       str_detect(term, "BNA")       ~ "BNA",
       str_detect(term, "MRB")       ~ "MRB",
       str_detect(term, "ASH")       ~ "ASH",
-      str_detect(term, "SCX")       ~ "SCX",
       str_detect(term, "CKV")       ~ "CKV",
       str_detect(term, "flow_cfs")  ~ "Flow",   # flow_lag terms
       TRUE                          ~ "Other"
@@ -197,11 +190,10 @@ coef_both <- bind_rows(
     
     station_rank = case_when(
       station == "Flow" ~ 6L,        # put flow lags at very top
-      station == "SCX"  ~ 5L,        # Springfield
-      station == "BNA"  ~ 4L,        # Nashville Airport
-      station == "CKV"  ~ 3L,        # Clarksville
-      station == "ASH"  ~ 2L,        # Ashland City
-      station == "MRB"  ~ 1L,        # Murfreesboro
+      station == "BNA"  ~ 5L,        # Nashville Airport
+      station == "CKV"  ~ 4L,        # Clarksville
+      station == "ASH"  ~ 3L,        # Ashland City
+      station == "MRB"  ~ 2L,        # Murfreesboro
       TRUE              ~ 0L
     ),
     # Lag 1 above Lag 2
@@ -250,7 +242,6 @@ gg_coef_both <- ggplot(
       "ASH"  = "orange3",
       "BNA"  = "darkgreen",
       "CKV"  = "purple4",
-      "SCX"  = "dodgerblue3",
       "MRB"  = "red3",
       "Flow" = "grey20"   # flow_lag1 / flow_lag2
     )

@@ -8,7 +8,82 @@ This project builds a complete, reproducible hydrologic data pipeline in R and e
 
 ---
 
-### Project Overview
+## **Project Motivation**
+
+In May 2010, Nashville experienced a historic flood that dramatically impacted the Cumberland River basin.  
+Understanding how rainfall translates into river discharge is not only a statistical question — it is a watershed-scale systems question involving geography, hydrologic memory, and dam regulation.
+
+This project investigates how upstream rainfall stations influence daily discharge at the USGS Nashville gauge (03431500) and evaluates the relative importance of:
+
+- River persistence (lagged discharge)
+- Local rainfall
+- Multi-station rainfall contributions
+- Watershed boundaries
+
+---
+
+## **Project Goals**
+
+- Build a fully reproducible hydrologic data pipeline in R.
+- Integrate multi-station rainfall with USGS discharge data.
+- Quantify hydrologic memory using autocorrelation analysis.
+- Compare rainfall-only vs autoregressive vs combined models.
+- Validate statistical results against watershed geography.
+- Deliver an interactive Shiny dashboard for exploration.
+
+---
+
+## **Key Insights**
+
+- The Cumberland River shows **extremely strong short-term memory** (Lag-1 ACF ≈ 0.97).
+- Rainfall alone explains very little daily variability (R² ≈ 0.01).
+- Lagged discharge explains ~95% of flow variability.
+- Rainfall provides incremental improvements after accounting for persistence.
+- Stations inside the upstream watershed influence discharge.
+- Stations outside the watershed (MRB) show negligible impact.
+- Statistical results align with physical basin boundaries and dam structure.
+
+---
+
+**Executive takeaway:** The Cumberland River is a persistence-dominated hydrologic system where rainfall provides incremental short-term forcing within watershed boundaries.
+
+---
+
+## Live Interactive Dashboard
+
+The Shiny application is deployed online:
+
+**[Launch the Live App](https://sivaraja-data.shinyapps.io/cumberland-river-analysis/)**
+
+## **Dashboard Sections**
+
+### Part 1 — Hydrologic Exploration
+
+- Annual discharge and rainfall summaries
+- Daily discharge and rainfall time series
+- 7-day rolling rainfall–flow relationships
+- Seasonal discharge patterns
+- Autocorrelation (ACF) analysis
+- High-resolution watershed map (basin polygon, flowlines, dams, rainfall stations)
+
+### Part 2 — Statistical Modeling
+
+- Lag-1 persistence model (Flow ~ Lag1)
+- Combined model (Flow ~ Lag1 + Rainfall)
+- Side-by-side “Actual vs Fitted” diagnostics
+- Model comparison using R², Adjusted R², and AIC
+- Comparison of BNA-only vs multi-station rainfall models
+
+### **Purpose of the Dashboard**
+
+- Translates statistical results into visual interpretation
+- Demonstrates hydrologic memory in real time
+- Quantifies incremental rainfall effects
+- Connects regression results to watershed geography
+
+---
+
+## **Project Overview**
 
 The Cumberland River drains a large watershed upstream of Nashville.  
 To understand how rainfall influences the river, this project:
@@ -42,8 +117,8 @@ Cumberland-River-Streamflow-Rainfall-Analysis-Mid-Course-Project/
 │   ├── merged_usgs_nashville_rainfall_daily.csv# Streamflow + BNA rainfall (daily)
 │   ├── usgs_rainfall_seasonal_clean.csv        # Clean dataset with seasonal categories added
 │   ├── usgs_multi_s_rainfall_clean.csv         # Streamflow + all-station rainfall (long format)
-│   ├── usgs_daily_clean_data.csv               # Parsed USGS daily discharge data
-│   └── (other intermediate CSV/RDS files)      # Additional merged/transformed datasets
+│   └──  usgs_daily_clean_data.csv               # Parsed USGS daily discharge data
+│   
 │
 ├── R/                                          # Reproducible R scripts (data pipeline)
 │   ├── usgs_raw_json/                          # Folder for raw JSON snapshots
@@ -58,28 +133,26 @@ Cumberland-River-Streamflow-Rainfall-Analysis-Mid-Course-Project/
 │   ├── usgs_multi_s_rainfall_clean.R           # Merge streamflow + multi-station rainfall
 │   ├── usgs_multi_s_rainfall_wide_reg_clean.R  # Final regression-ready dataset (lag features included)
 │   ├── autocorrelation_analysis.R              # ACF, lag stats, daily/weekly change histograms
-│   ├── maps_cumberland_basin.R                 # Basin polygon + flowlines + dams + stations map
-│   └── (future scripts)                        # Additional analysis or modeling scripts
-│
-├── Shiny_app/                                  # Shiny interactive dashboard
-│   ├── app.R                                   # Single-file Shiny version
+│   └──  maps_cumberland_basin.R                # Basin polygon + flowlines + dams + stations map
+│   
+├── Shiny_app/                                  
 │   ├── global.R                                # Load data, packages, shared objects
-│   ├── ui.R                                    # UI layout for split-file Shiny structure
-│   ├── server.R                                # Server logic for Shiny app
-│   ├── data/                                   # Subset of cleaned data for app use
-│   └── www/                                    # CSS, images, icons used in UI
+│   ├── ui.R                                    # UI layout (tab structure, controls)
+│   ├── server.R                                # Server logic (reactive plots & models)
+│   ├── data/
+│       ├── merged_usgs_nashville_rainfall_daily.csv
+│       ├── rainfall_wide_multi_station.csv
+│       └── Create_map.R
+│                        
+│   
 │
 ├── figures/                                    # Saved plots and visualizations
 │   ├── acf_day_change_hist.png                 # Daily change histogram
 │   ├── acf_week_change_hist.png                # Weekly change histogram
-│   ├── 
-│   ├── reg_coefficients_rain_vs_flow_lag.png      # Lagged regression coefficients
-│   ├── cumberland_basin_rainfall_stations.png           # High-resolution watershed map
-│   └── 
+│   ├── reg_coefficients_rain_vs_flow_lag.png   # Lagged regression coefficients
+│   ├── cumberland_basin_rainfall_stations.png  # High-resolution watershed map
+│   
 │
-├── docs/                                       # Documentation & project notes
-│   ├── midcourse_presentation_slides.Rmd       # Presentation files
-│   └──             
 │
 └── README.md                                   # Project overview, data pipeline, instructions
 
@@ -89,7 +162,7 @@ Cumberland-River-Streamflow-Rainfall-Analysis-Mid-Course-Project/
 
 - Cumberland River upstream watershed polygon
 - River flowlines leading to the Nashville gauge
-- Four upstream rainfall stations (SCX, BNA, CKV, ASH)
+- Three upstream rainfall stations (BNA, CKV, ASH)
 - Murfreesboro (MRB) highlighted outside the watershed
 - Old Hickory Dam and J. Percy Priest Dam
 - North arrow and scale bar
@@ -101,12 +174,13 @@ Cumberland-River-Streamflow-Rainfall-Analysis-Mid-Course-Project/
 ### Why This Map Is Important
 
 - The map clarifies which rainfall stations influence the Nashville river gauge.
-- SCX, BNA, CKV, and ASH lie inside or adjacent to the upstream watershed.
+- BNA, CKV, and ASH lie inside or adjacent to the upstream watershed.
 - MRB (Murfreesboro) lies **outside** the upstream Cumberland basin.
 - MRB rainfall drains into the Stones River / Percy Priest Lake system and joins the Cumberland **downstream** of USGS Gauge 03431500.
 - This explains why MRB coefficients were small or negative in regression models.
 
 
+---
 
 ### Data Sources
 
@@ -118,9 +192,8 @@ Cumberland-River-Streamflow-Rainfall-Analysis-Mid-Course-Project/
 
 **NOAA / RIEM Rainfall – Multi-Station**
 
-Five stations included:
+Four stations included:
 
-- SCX – Springfield
 - BNA – Nashville Airport
 - CKV – Clarksville
 - ASH – Ashland City
@@ -131,20 +204,13 @@ Using the `riem` package:
 - Hourly rainfall downloaded via `riem_measures()`
 - Hourly → Daily totals aggregated
 - Data reshaped to wide format:
+- `date | rainfall_BNA | rainfall_CKV | rainfall_ASH | rainfall_MRB`
 
-  `date | rainfall_SCX | rainfall_BNA | rainfall_CKV | rainfall_ASH | rainfall_MRB`
-
-
+---
 
 ## Pipeline Summary
 
 ### 1. Download Raw Data
-**Scripts:**
-
-- usgs_raw_json.R
-- rainfall_multi_s_hourly_raw.R
-- rainfall_nashville_raw.R
-
 **Tasks:**
 
 - Download USGS daily discharge for site 03431500.
@@ -154,11 +220,6 @@ Using the `riem` package:
 
 
 ### 2. Clean Each Dataset
-**Scripts:**
-
-- usgs_daily_clean_data.R
-- rainfall_nashville_daily_clean.R
-- rainfall_multi_s_daily_clean.R
 
 **Tasks:**
 
@@ -171,23 +232,20 @@ Using the `riem` package:
 
 
 ### 3. Merge Streamflow and Rainfall
-**Scripts:**
-
-- merged_usgs_nashville_rainfall_daily.R  
-- usgs_multi_s_rainfall_clean.R  
-- rainfall_wide_multi_station.R  
 
 **Tasks:**
 
 - Convert rainfall to wide format (one row per date).
 - Columns include:  
-  `rainfall_SCX`, `rainfall_BNA`, `rainfall_CKV`, `rainfall_ASH`, `rainfall_MRB`
+  `rainfall_BNA`, `rainfall_CKV`, `rainfall_ASH`, `rainfall_MRB`
 - Join rainfall with `usgs_daily_clean_data.csv` by date.
+- Save merged and cleaned csvs to `data_clean/`.
 
-
+---
 
 ## Autocorrelation Analysis
-**Script:** autocorrelation_analysis.R
+
+**Script:** `autocorrelation_analysis.R`
 
 ### What Was Computed
 - ACF up to 30-day lag
@@ -200,7 +258,7 @@ Using the `riem` package:
 
 
 
-## Histogram Comparison
+### Histogram Comparison
 
 ### Daily Change in Streamflow
 - Difference from yesterday  
@@ -215,11 +273,13 @@ Using the `riem` package:
 - `figures/acf_day_change_hist.png`
 - `figures/acf_week_change_hist.png`
 
+---
 
 ## Regression Modeling Results
+
 **Script:** 
 
-usgs_multi_s_rainfall_wide_reg_clean.R
+`usgs_multi_s_rainfall_wide_reg_clean.R`
 
 ### single-Station Model (BNA Only)
 
@@ -253,15 +313,13 @@ usgs_multi_s_rainfall_wide_reg_clean.R
 `lm(
 flow_cfs ~
 rainfall_BNA_lag1 + rainfall_BNA_lag2 +
-rainfall_SCX_lag1 + rainfall_SCX_lag2 +
 rainfall_CKV_lag1 + rainfall_CKV_lag2 +
 rainfall_ASH_lag1 + rainfall_ASH_lag2 +
 rainfall_MRB_lag1 + rainfall_MRB_lag2)`
 
-### These models use rainfall (same-day or lagged) as the only predictors of streamflow.
+ **These models use rainfall (same-day or lagged) as the only predictors of streamflow.**
 
 - R² values range from 0.01–0.10
-- Rainfall coefficients often appear very large (e.g., SCX ~10,000 cfs per inch)
 - The model forces rainfall to explain both:
 - short-term storm-driven changes
 - long-term river persistence (baseflow + dam regulation)
@@ -270,33 +328,6 @@ rainfall_MRB_lag1 + rainfall_MRB_lag2)`
 
 - Rainfall-only models overestimate rainfall effects, because they do not account for the river’s natural inertia.
 
-### Flow_multi-Station rain fall lagged model
-
-`Model_rain_flow_cfs_lag`
-
-`lm(
-  flow_cfs ~ flow_cfs_lag1 + flow_cfs_lag2 +
-    rainfall_BNA_lag1 + rainfall_BNA_lag2+
-    rainfall_MRB_lag1 + rainfall_MRB_lag2+
-    rainfall_ASH_lag1 + rainfall_ASH_lag2 +
-    rainfall_SCX_lag1 + rainfall_SCX_lag2 +
-    rainfall_CKV_lag1 + rainfall_CKV_lag2,
-  data = reg_rain_flow_lag
-)`
-
-### Key findings:
-
-- R² ≈ 0.952 (excellent)
-- Rainfall effects become smaller but more accurate
-- SCX (Springfield) shows the strongest hydrologic response
-- BNA shows moderate influence
-- CKV shows weak influence
-- ASH has near-zero effects
-- MRB has negligible or negative effects (expected, outside watershed)
-
-**Interpretation:**
-
-- This model isolates the true incremental effect of rainfall after accounting for river inertia.
 
 ### Autoregressive (AR) Model Summary (`model_flow_cfs_lag`)
 
@@ -306,68 +337,30 @@ rainfall_MRB_lag1 + rainfall_MRB_lag2)`
 - The AR(2) model explains ~95% of daily streamflow variability (R² ≈ 0.95).
 - This reflects the river’s strong short-term persistence and slow day-to-day changes.
 
-### Why Rainfall Coefficients Change Dramatically Between Models
+---
 
-- In rainfall-only models, rainfall must explain both long-term flow persistence and short-term storm effects.
-- Coefficients appear unrealistically large.
+## Scientific Summary 
 
-**In the combined model, flow lags explain persistence.**
-
-- Rainfall coefficients shrink to their hydrologically meaningful size.
-
-**Example:**
-
-- SCX (rainfall only): ~10,000–12,000 cfs per inch
-- SCX (flow + rainfall): ~2,400 cfs per inch (lag 1)
-- The second value represents the true hydrologic impact.
-
-### Why Murfreesboro (MRB) has no effect
-
-- MRB lies outside the upstream Cumberland watershed.
-
-**Rain falling at Murfreesboro drains into:**
-
-Stones River → J. Percy Priest Lake. Then joins the Cumberland downstream of the Nashville gauge
-
-**Thus:** 
-
-- MRB rainfall cannot change upstream discharge at Nashville. 
-- Regression correctly shows near-zero or negative coefficients.
-
-**Interpretation:**
-
-- The model is accurately reflecting watershed geography.
-
-## Scientific Summary
-
-- The Cumberland River shows very strong hydrologic memory
-- Rainfall contributes incremental flow increases, strongest from Springfield (SCX)
-- SCX lies deep in the upstream basin — hydrologically influential
-- BNA shows moderate influence; CKV weak; ASH minimal
-- MRB has no effect because it lies outside the watershed
-- Combined models match physical watershed behavior and dam operations
-
-## **Overall conclusion:**
-
-- **Streamflow at Nashville is controlled primarily by yesterday’s discharge and secondarily by rainfall within the upstream watershed.**
+- The Cumberland River exhibits strong hydrologic memory.
+- Yesterday’s discharge is the dominant predictor of today’s flow.
+- Rainfall contributes incremental short-term effects.
+- Multi-station models focus on rainfall gauges located within or adjacent to the upstream watershed.
+- Nearby stations (BNA, CKV, ASH) show modest influence.
+- Multi-station rainfall adds only small predictive improvement beyond lagged flow.
+- Model behavior aligns with watershed boundaries and dam regulation dynamics.
 
 
+## Overall Conclusion
 
+**Streamflow at Nashville is primarily controlled by river persistence (lagged discharge), with rainfall providing secondary short-term adjustments from stations within the upstream watershed.**
 
-## Next Steps
-- Add seasonal effects (wet/dry)
-- Explore nonlinear or GAM models
-- Expand Shiny app to include:
-  - time series
-  - rainfall–flow correlations
-  - maps
-  - multi-station comparisons
-- Explore 3–7 day cumulative rainfall predictors
-
-
+---
 
 ## Notes on Reproducibility
+
 - Raw data stored in `data_raw/`
 - Cleaned data produced through scripts only
 - No hand-edited intermediate files
 - Pipeline can be rerun end-to-end
+
+---

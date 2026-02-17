@@ -9,22 +9,41 @@ head(rain_hourly, 5)
 colnames(rain_hourly)
 summary(rain_hourly$p01i)
 
-## Convert daily rainfall
-
-rain_daily <- rain_hourly |>
+rain_hourly_clean <- rain_hourly |>
+  filter(!is.na(p01i)) |>
   mutate(
-    date = as_date(valid),
-    rain_in = p01i) |>
-  
-  #Group by day
+    hour = floor_date(valid, "hour"),
+  ) |>
+  group_by(hour) |>
+  summarise(
+    rain_in = max(p01i, na.rm =TRUE),
+    .groups = "drop"
+    
+  ) 
+
+
+rain_hourly_clean
+
+
+
+#Group by day
+
+rain_daily <- rain_hourly_clean |>
+  mutate(
+    date =as.Date(hour)
+  ) |>
   
   group_by(date) |>
   summarize(
     rain_in = sum(rain_in, na.rm = TRUE), # rainfall in inches
-    rain_mm = rain_in * 25.4,            # convert to mm
     .groups = "drop"
   )
 
 rain_daily
+
+rain_daily |>
+  mutate(year = year(date)) |>
+  group_by(year) |>
+  summarise(total_rain = sum(rain_in, na.rm = TRUE))
 
 write_csv(rain_daily, "data_clean/rainfall_nashville_daily_clean.csv")

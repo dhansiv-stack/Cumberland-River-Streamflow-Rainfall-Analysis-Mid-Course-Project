@@ -9,7 +9,7 @@ rain_multi_s_daily_clean <- read_csv("data_clean/rainfall_multi_s_daily_clean.cs
     date = as_date(date)
   ) |>
   
-  select(station, date, rain_in, rain_mm)
+  select(station, date, rain_in)
 
 rain_multi_s_daily_clean
 

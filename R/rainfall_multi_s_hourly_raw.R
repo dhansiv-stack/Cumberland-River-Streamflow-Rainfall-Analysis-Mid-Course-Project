@@ -5,7 +5,7 @@ library(purrr)
 
 ## Download multiple stations rainfall
 
-stations <- c("CKV", "ASH", "SCX", "MRB", "BNA")
+stations <- c("CKV", "ASH", "MRB", "BNA")
 
 rainfall_multi_s_hourly <- purrr:: map_dfr(
   stations,

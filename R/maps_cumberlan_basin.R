@@ -9,10 +9,9 @@ library(scales)   # for pretty_breaks
 # 2. Rainfall station locations (manual coordinates) 
 stations_df <- tribble(
   ~station, ~station_name,       ~lon,     ~lat,    ~is_mrb,
+  "BNA",    "BNA Airport",       -86.677,  36.126,  FALSE,
   "CKV",    "Clarksville",       -87.415,  36.622,  FALSE,
-  "ASH",    "Ashland City",      -87.064,  36.274,  FALSE,
-  "SCX",    "Springfield",       -86.884,  36.509,  FALSE,
-  "BNA",    "Nashville Airport", -86.668,  36.126,  FALSE,
+  "ASH",    "ASH station",       -87.060,  36.270,  FALSE,
   "MRB",    "Murfreesboro",      -86.390,  35.846,  TRUE
 )
 
