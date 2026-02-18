@@ -43,6 +43,10 @@ ui <- fluidPage(
               choices  = sort(unique(merged_data$year)),
               selected = max(merged_data$year)
             ),
+            h4(tags$b("Study Period Overview (2010–2024)")),
+            uiOutput("overall_metrics"),
+            br(),
+            
             hr(),
             h4(tags$b("Year summary")),
             uiOutput("year_metrics")
@@ -188,6 +192,7 @@ ui <- fluidPage(
           )
         ),
         
+        strong(textOutput("scatter_correlation")),
         br(),
         uiOutput("scatter_note")
       )
@@ -258,9 +263,23 @@ ui <- fluidPage(
         br(),
         
         fluidRow(
-          column(width = 6, plotOutput("lag_plot_lagonly", height = "420px")),
-          column(width = 6, plotOutput("lag_plot_lagrain", height = "420px"))
+          column(
+            width = 12,
+            radioButtons(
+              inputId = "lag_plot_choice",
+              label   = "Select model plot:",
+              choices = c(
+                "Lag 1 only" = "lagonly",
+                "Rain + Lag 1" = "lagrain"
+              ),
+              
+              selected = "lagonly",
+              inline   = TRUE
+            ),
+            plotOutput("lag_plot_selected", height = "420px")
+          )
         ),
+        
         br(),
         
         h4("Model comparison (same year)"),

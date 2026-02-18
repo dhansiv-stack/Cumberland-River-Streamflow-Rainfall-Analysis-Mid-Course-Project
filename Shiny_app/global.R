@@ -47,7 +47,7 @@ acf_flow <- stats::acf(
 )
 
 
-# 4) Model comparison datasets (BNA vs All stations; exclude SCX)
+# 4) Model comparison datasets (BNA vs All stations
 
 rain_wide_daily <- readr::read_csv("data/rainfall_wide_multi_station.csv",
                                    show_col_types = FALSE) |>

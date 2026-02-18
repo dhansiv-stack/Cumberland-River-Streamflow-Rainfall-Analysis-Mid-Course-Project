@@ -1,8 +1,8 @@
 server <- function(input, output, session) {
   
- 
+  
   # Helpers
-
+  
   year_filter <- function(year_input_id) {
     reactive({
       req(input[[year_input_id]])
@@ -11,9 +11,9 @@ server <- function(input, output, session) {
     })
   }
   
-
+  
   # 1) Reactive filters
-
+  
   year_filt_story     <- year_filter("year")
   year_filt_flow_rain <- year_filter("year_flow_rain")
   year_filt_season    <- year_filter("year_season_rain")
@@ -25,11 +25,24 @@ server <- function(input, output, session) {
     dplyr::filter(lag_data, year == yr)
   })
   
-
+  # Overall (2010–2024) metrics 
   
-
+  overall_metrics <- merged_data |>
+    dplyr::summarise(
+      years_span   = paste0(min(year), "–", max(year)),
+      n_obs        = dplyr::n(),
+      flow_mean    = mean(value, na.rm = TRUE),
+      flow_median  = median(value, na.rm = TRUE),
+      flow_peak    = max(value, na.rm = TRUE),
+      rain_total   = sum(rain_in, na.rm = TRUE),
+      rain_mean    = mean(rain_in, na.rm = TRUE),
+      rain_median  = median(rain_in, na.rm = TRUE),
+      rain_peak    = max(rain_in, na.rm = TRUE)
+    )
+  
+  
   # 2) Overview metrics
-
+  
   output$year_metrics <- renderUI({
     story <- year_filt_story()
     req(nrow(story) > 0)
@@ -55,9 +68,32 @@ server <- function(input, output, session) {
     )
   })
   
-
+  output$overall_metrics <- renderUI({
+    tags$ul(
+      tags$li(
+        tags$b("Study Period: "),
+        overall_metrics$years_span,
+        glue::glue(" ({overall_metrics$n_obs} daily observations)")
+      ),
+      tags$li(
+        tags$b("Flow (cfs): "),
+        glue::glue("Mean {round(overall_metrics$flow_mean,0)}, 
+                  Median {round(overall_metrics$flow_median,0)}, 
+                  Peak {round(overall_metrics$flow_peak,0)}")
+      ),
+      tags$li(
+        tags$b("Rain (in): "),
+        glue::glue("Total {round(overall_metrics$rain_total,1)}, 
+                  Mean/day {round(overall_metrics$rain_mean,2)}, 
+                  Median/day {round(overall_metrics$rain_median,2)}, 
+                  Peak/day {round(overall_metrics$rain_peak,2)}")
+      )
+    )
+  })
+  
+  
   # 3) Daily discharge
-
+  
   output$discharge_plot <- renderPlot({
     df <- year_filt_flow_rain() |>
       dplyr::arrange(date) |>
@@ -95,9 +131,9 @@ server <- function(input, output, session) {
       )
   }, res = 120)
   
-
+  
   # 4) Daily rainfall
-
+  
   output$rainfall_plot <- renderPlot({
     df <- year_filt_flow_rain() |>
       dplyr::arrange(date) |>
@@ -134,9 +170,9 @@ server <- function(input, output, session) {
       )
   }, res = 120)
   
-
+  
   # 5) Seasonal patterns
-
+  
   output$season_boxplot <- renderPlot({
     df <- year_filt_season() |>
       dplyr::mutate(
@@ -169,11 +205,11 @@ server <- function(input, output, session) {
         axis.ticks.length = grid::unit(4, "pt")
       )
   }, res = 120)
-
- # 6) Streamflow vs Rainfall tab  
-
+  
+  # 6) Streamflow vs Rainfall tab  
+  
   # Scatter (daily)
-
+  
   output$scatter_daily <- renderPlot({
     df <- year_filt_scatter()
     
@@ -199,9 +235,9 @@ server <- function(input, output, session) {
       )
   }, res = 120)
   
-
+  
   # Scatter (rolling 7-day)
-
+  
   output$scatter_roll7 <- renderPlot({
     df <- year_filt_scatter() |>
       dplyr::arrange(date) |>
@@ -235,28 +271,49 @@ server <- function(input, output, session) {
   
   output$scatter_note <- renderUI({
     tags$div(
-      tags$h4(tags$b("Why use a 7-day rolling window?")),
+      tags$h4(tags$b("Key Takeaways")),
       tags$ul(
-        tags$li(tags$b("Daily plot: points pile up at zero rainfall"), " because most days have no rain, creating a vertical cluster at x = 0."),
-        tags$li(tags$b("River flow is not zero on dry days"), " due to baseflow, groundwater contributions, upstream storage, and reservoir regulation."),
-        tags$li(tags$b("Same-day rainfall is a weak predictor"), " because streamflow responds with delay and integrates rainfall over time."),
-        tags$li(tags$b("7-day rolling rainfall (total) captures storm sequences"), " and represents cumulative watershed input."),
-        tags$li(tags$b("7-day rolling discharge (mean) smooths short-term noise"), " making the rainfall–streamflow relationship easier to see and explain.")
-      ),
-      tags$p(tags$b("Takeaway: "), "Rolling windows reflect hydrologic memory and reduce the dominance of zero-rainfall days in the scatter plot.")
+        tags$li("Daily scatter shows many zero-rain days → weak same-day signal."),
+        tags$li("Flow remains positive due to baseflow and upstream storage."),
+        tags$li("7-day rolling reduces noise and reveals storm-driven patterns."),
+        tags$li(tags$b("Correlation ≈ 0.21 → modest positive association.")),
+        tags$li(tags$b("Conclusion: rainfall contributes, but persistence dominates daily predictability."))
+      )
     )
   })
   
-
+  # Compute correlation
+  
+  flow_rain_roll7_df <- reactive({
+    df <- year_filt_flow_rain() |>
+      dplyr::arrange(date) |>
+      dplyr::mutate(
+        rain_7d = slider::slide_dbl(rain_in, ~ sum(.x, na.rm = TRUE),  .before = 6, .complete = TRUE),
+        flow_7d = slider::slide_dbl(value,   ~ mean(.x, na.rm = TRUE), .before = 6, .complete = TRUE)
+      )
+    df
+  })
+  
+  flow_rain_roll7_df
+  
+  output$scatter_correlation <- renderText({
+    df <- flow_rain_roll7_df()
+    
+    cor_val <- cor(df$rain_7d, df$flow_7d, use = "complete.obs")
+    
+    glue::glue("Pearson correlation (7-day rolling): {round(cor_val, 3)}")
+  })
+  
+  
   # 7) Map 
   
   output$basin_map_plot <- renderPlot({
     gg_mrb_map
   }, res = 120)
   
-
+  
   # 8) ACF
-
+  
   output$acf_plot <- renderPlot({
     plot(
       acf_flow,
@@ -267,18 +324,19 @@ server <- function(input, output, session) {
   }, res = 120)
   
   output$acf_note <- renderUI({
-    HTML("
-      <ul>
-        <li><b>The autocorrelation function (ACF)</b> shows how strongly daily Cumberland River discharge is related to previous days.</li>
-        <li><b>High positive correlation at short lags (1–7 days)</b> indicates strong short-term memory in the river system.</li>
-        <li>This means streamflow changes gradually rather than randomly from day to day.</li>
-        <li>As lag increases, the correlation decays, reflecting the dissipation of hydrologic memory over time.</li>
-        <li>This pattern supports including <b>lagged flow terms</b> in the regression model.</li>
-      </ul>
-    ")
+    tags$div(
+      tags$h4(tags$b("What does ACF show?")),
+      tags$ul(
+        tags$li("Autocorrelation measures how strongly today's flow relates to previous days."),
+        tags$li("High values at short lags indicate strong short-term persistence."),
+        tags$li("Gradual decay suggests the river changes slowly rather than abruptly.")
+      ),
+      tags$p(tags$b("Takeaway: "), 
+             "The Cumberland River has strong short-term memory, supporting the use of lag-based regression models.")
+    )
   })
   
-
+  
   # 9) Lag regression
   
   lag_data <- merged_data |>
@@ -298,7 +356,7 @@ server <- function(input, output, session) {
   })
   
   # Reactive part for plotting
-
+  
   lag_data_year <- reactive({
     req(input$year_lag)
     yr <- as.integer(input$year_lag)
@@ -341,48 +399,69 @@ server <- function(input, output, session) {
         delta_AIC = AIC-min(AIC)
       )
   })
-# Helper function for the plots
+  # Helper function for the plots
   
   plot_actual_vs_fitted <- function(df, fit, title) {
     df$fitted <- predict(fit, newdata = df)
     
-  ggplot2::ggplot(df, ggplot2::aes(x = value, y = fitted)) +
-    ggplot2::geom_point(alpha = 0.5, color = "steelblue") +
-    ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
-    ggplot2::scale_x_continuous(labels = scales::label_comma()) +
-    ggplot2::scale_y_continuous(labels = scales::label_comma()) +
-    ggplot2::labs(title = title, x = "Actual Discharge (cfs)", y = "Fitted Discharge (cfs)") +
-    ggplot2::theme_minimal(base_size = 10) +
-    ggplot2::theme(
-      plot.title        = ggplot2::element_text(hjust = 0.5, face = "bold", size = 10),
-      panel.border      = ggplot2::element_rect(color = "black", fill = NA, linewidth = 0.8),
-      axis.line         = ggplot2::element_line(color = "black"),
-      axis.ticks        = ggplot2::element_line(color = "grey40"),
-      axis.ticks.length = grid::unit(4, "pt")
-    )
+    ggplot2::ggplot(df, ggplot2::aes(x = value, y = fitted)) +
+      ggplot2::geom_point(alpha = 0.5, color = "steelblue") +
+      ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+      ggplot2::scale_x_continuous(labels = scales::label_comma()) +
+      ggplot2::scale_y_continuous(labels = scales::label_comma()) +
+      ggplot2::labs(title = title, x = "Actual Discharge (cfs)", y = "Fitted Discharge (cfs)") +
+      ggplot2::theme_minimal(base_size = 10) +
+      ggplot2::theme(
+        plot.title        = ggplot2::element_text(hjust = 0.5, face = "bold", size = 10),
+        panel.border      = ggplot2::element_rect(color = "black", fill = NA, linewidth = 0.8),
+        axis.line         = ggplot2::element_line(color = "black"),
+        axis.ticks        = ggplot2::element_line(color = "grey40"),
+        axis.ticks.length = grid::unit(4, "pt")
+      )
   }
- 
-
   
-# Two plots
   
-  output$lag_plot_lagonly <- renderPlot({
-    df  <- lag_data_year()
-    fit <- model_lag_only()
-    plot_actual_vs_fitted(df, fit, glue::glue("Actual vs Fitted ({input$year_lag}): Flow ~ Lag1"))
+  
+  # Two plots
+  
+  output$lag_plot_selected <- renderPlot({
+    req(input$lag_plot_choice)
+    
+    df <- lag_data_year()
+    req(nrow(df) > 30)
+    
+    fit <- switch(
+      input$lag_plot_choice,
+      "lagonly" = model_lag_only(),
+      "lagrain" = model_lag_rain()
+    )
+    
+    title <- switch(
+      input$lag_plot_choice,
+      "lagonly" = glue::glue("Actual vs Fitted ({input$year_lag}): Flow ~ Lag1"),
+      "lagrain" = glue::glue("Actual vs Fitted ({input$year_lag}): Flow ~ Lag1 + Rain")
+    )
+    
+    plot_actual_vs_fitted(df, fit, title)
   }, res = 120)
   
-  output$lag_plot_lagrain <- renderPlot({
-    df  <- lag_data_year()
-    fit <- model_lag_rain()
-    plot_actual_vs_fitted(df, fit, glue::glue("Actual vs Fitted ({input$year_lag}): Flow ~ Lag1 + Rain"))
-  }, res = 120)
+  # output$lag_plot_lagonly <- renderPlot({
+  #   df  <- lag_data_year()
+  #   fit <- model_lag_only()
+  #   plot_actual_vs_fitted(df, fit, glue::glue("Actual vs Fitted ({input$year_lag}): Flow ~ Lag1"))
+  # }, res = 120)
+  # 
+  # output$lag_plot_lagrain <- renderPlot({
+  #   df  <- lag_data_year()
+  #   fit <- model_lag_rain()
+  #   plot_actual_vs_fitted(df, fit, glue::glue("Actual vs Fitted ({input$year_lag}): Flow ~ Lag1 + Rain"))
+  # }, res = 120)
   
-
- 
+  
+  
   
   # 10) Model comparison
-
+  
   output$model_compare_table <- renderTable({
     all_stations_compare_tbl
   })
