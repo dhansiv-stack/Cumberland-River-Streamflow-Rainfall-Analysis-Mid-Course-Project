@@ -49,11 +49,14 @@ po/*~
 rsconnect/
 
 # Do NOT track raw data or large figures
-data_raw/
-figures/
+data_raw/*
+!data_raw/.gitkeep
+figures/*
+!figures/.gitkeep
 *.png
 *.jpg
 *.jpeg
 *.tif
 *.tiff
 *.pdf
+~
