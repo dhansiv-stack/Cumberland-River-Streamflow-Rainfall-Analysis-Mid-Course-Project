@@ -153,7 +153,7 @@ Cumberland-River-Streamflow-Rainfall-Analysis-Mid-Course-Project/
 │   ├── cumberland_basin_rainfall_stations.png  # High-resolution watershed map
 │   
 ├── Presentation/
-|   ├── Cumberland River Flow Analysis.ppt      # Presentation powerpoint slides
+|   ├── Cumberland River Flow Analysis.pptx      # Presentation powerpoint slides
 │
 └── README.md                                   # Project overview, data pipeline, instructions
 
