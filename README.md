@@ -104,11 +104,11 @@ The geospatial visualization clearly shows **which stations lie inside the upstr
 ### Repository Structure
 
 Cumberland-River-Streamflow-Rainfall-Analysis-Mid-Course-Project/
-│
-├── data_raw/                                   # Raw downloads (never edited)
-│   ├── usgs_raw_json.json                      # Original USGS DV JSON for site 03431500
-│   ├── rainfall_multi_s_hourly_raw.csv         # Hourly rainfall (CKV, ASH, SCX, MRB, BNA)
-│   └── rainfall_nashville_raw.csv              # Hourly rainfall for BNA Airport only
+
+├── data_raw/                                   # Raw downloads (large files kept locally, not tracked in GitHub)
+│   ├── .gitkeep                                # Placeholder so folder appears in repo
+│   ├── usgs_raw_json.json                      # (local only, ignored in repo)
+│   └── rainfall_multi_s_hourly_raw.csv         # (≈130 MB, local only)
 │
 ├── data_clean/                                 # Cleaned & engineered datasets
 │   ├── rainfall_nashville_daily_clean.csv      # Daily rainfall summary for BNA
